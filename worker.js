@@ -26,6 +26,31 @@ export default {
       const room = env.KASEB_ROOM.get(id);
       return room.fetch(request);
     }
+    // ۳. مسیر دریافت پیام از پایتون و ارسال به Code.gs (ضد فیلتر)
+    if (url.pathname === "/sync-to-sheets" || url.pathname.endsWith("/sync-to-sheets")) {
+      try {
+        const body = await request.json();
+        const targetUrl = "https://script.google.com/macros/s/AKfycbzu8n4g9NMtRcyT4tghWeR9o2fSaFLP1_I-zVUgXGxLLEqz0mDyOqEVLXQTZF1WhpCNCw/exec";
+        
+        const proxyReq = new Request(targetUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        
+        const response = await fetch(proxyReq);
+        const result = await response.json();
+        
+        return new Response(JSON.stringify(result), {
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ success: false, error: e.toString() }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    }
 
     // ۳. حفظ قابلیت پروکسی تلگرام (برای سازگاری با کدهای قبلی)
     if (url.pathname.includes("/bot") || url.pathname.startsWith("/bot")) {
